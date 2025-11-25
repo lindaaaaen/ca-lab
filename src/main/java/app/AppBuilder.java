@@ -1,8 +1,12 @@
 package app;
 
 import data_access.FileUserDataAccessObject;
+import data_access.FinnhubEarningsDataAccessObject;
 import entity.UserFactory;
 import interface_adapter.ViewManagerModel;
+import interface_adapter.earnings_history.EarningsHistoryController;
+import interface_adapter.earnings_history.EarningsHistoryPresenter;
+import interface_adapter.earnings_history.EarningsHistoryViewModel;
 import interface_adapter.logged_in.ChangePasswordController;
 import interface_adapter.logged_in.ChangePasswordPresenter;
 import interface_adapter.logged_in.LoggedInViewModel;
@@ -17,6 +21,7 @@ import interface_adapter.signup.SignupViewModel;
 import use_case.change_password.ChangePasswordInputBoundary;
 import use_case.change_password.ChangePasswordInteractor;
 import use_case.change_password.ChangePasswordOutputBoundary;
+import use_case.earnings_history.GetEarningsHistoryInteractor;
 import use_case.login.LoginInputBoundary;
 import use_case.login.LoginInteractor;
 import use_case.login.LoginOutputBoundary;
@@ -26,10 +31,7 @@ import use_case.logout.LogoutOutputBoundary;
 import use_case.signup.SignupInputBoundary;
 import use_case.signup.SignupInteractor;
 import use_case.signup.SignupOutputBoundary;
-import view.LoggedInView;
-import view.LoginView;
-import view.SignupView;
-import view.ViewManager;
+import view.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,11 +58,18 @@ public class AppBuilder {
     private LoggedInViewModel loggedInViewModel;
     private LoggedInView loggedInView;
     private LoginView loginView;
+    private EarningsHistoryView earningsHistoryView;
 
     public AppBuilder() {
         cardPanel.setLayout(cardLayout);
     }
 
+    public AppBuilder addEarningsHistoryView(EarningsHistoryView earningsHistoryView) {
+        signupViewModel = new SignupViewModel();
+        signupView = new SignupView(signupViewModel);
+        cardPanel.add(signupView, earningsHistoryView.getViewName());
+        return this;
+    }
     public AppBuilder addSignupView() {
         signupViewModel = new SignupViewModel();
         signupView = new SignupView(signupViewModel);
@@ -79,6 +88,36 @@ public class AppBuilder {
         loggedInViewModel = new LoggedInViewModel();
         loggedInView = new LoggedInView(loggedInViewModel);
         cardPanel.add(loggedInView, loggedInView.getViewName());
+        return this;
+    }
+
+    public AppBuilder addEarningsHistoryUseCase() {
+
+        EarningsHistoryViewModel viewModel =
+                new EarningsHistoryViewModel();
+
+        FinnhubEarningsDataAccessObject earningsDAO =
+                new FinnhubEarningsDataAccessObject(
+                        "https://finnhub.io/api/v1",
+                        "YOUR_API_KEY_HERE"
+                );
+
+        EarningsHistoryPresenter presenter =
+                new EarningsHistoryPresenter(viewModel, viewManagerModel);
+
+        GetEarningsHistoryInteractor interactor =
+                new GetEarningsHistoryInteractor(earningsDAO, presenter);
+
+        EarningsHistoryController controller =
+                new EarningsHistoryController(interactor);
+
+        EarningsHistoryView view =
+                new EarningsHistoryView(viewModel);
+
+        view.setController(controller);
+
+        cardPanel.add(view);     // or however your app is managing views
+
         return this;
     }
 
